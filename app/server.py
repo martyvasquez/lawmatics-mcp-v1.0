@@ -148,7 +148,7 @@ import os as _os
 import httpx as _httpx
 from pydantic import Field as _Field
 
-_API_KEY = _os.getenv("LAWMATICS_API_KEY")
+_API_KEY = _os.getenv("LAWMATICS_ACCESS_TOKEN") or _os.getenv("LAWMATICS_API_KEY")
 
 
 @mcp.resource(
@@ -163,7 +163,7 @@ async def get_contact_resource(
 ) -> dict[str, Any]:
     """Get a contact by ID from Lawmatics."""
     if not _API_KEY:
-        raise ValueError("LAWMATICS_API_KEY not found")
+        raise ValueError("LAWMATICS_ACCESS_TOKEN or LAWMATICS_API_KEY not found")
 
     headers = {"Authorization": f"Bearer {_API_KEY}"}
     async with _httpx.AsyncClient() as client:
@@ -188,7 +188,7 @@ async def get_matter_resource(
 ) -> dict[str, Any]:
     """Get a matter by ID from Lawmatics."""
     if not _API_KEY:
-        raise ValueError("LAWMATICS_API_KEY not found")
+        raise ValueError("LAWMATICS_ACCESS_TOKEN or LAWMATICS_API_KEY not found")
 
     headers = {"Authorization": f"Bearer {_API_KEY}"}
     async with _httpx.AsyncClient() as client:
@@ -213,7 +213,7 @@ async def get_task_resource(
 ) -> dict[str, Any]:
     """Get a task by ID from Lawmatics."""
     if not _API_KEY:
-        raise ValueError("LAWMATICS_API_KEY not found")
+        raise ValueError("LAWMATICS_ACCESS_TOKEN or LAWMATICS_API_KEY not found")
 
     headers = {"Authorization": f"Bearer {_API_KEY}"}
     async with _httpx.AsyncClient() as client:
@@ -238,7 +238,7 @@ async def get_company_resource(
 ) -> dict[str, Any]:
     """Get a company by ID from Lawmatics."""
     if not _API_KEY:
-        raise ValueError("LAWMATICS_API_KEY not found")
+        raise ValueError("LAWMATICS_ACCESS_TOKEN or LAWMATICS_API_KEY not found")
 
     headers = {"Authorization": f"Bearer {_API_KEY}"}
     async with _httpx.AsyncClient() as client:

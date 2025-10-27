@@ -14,8 +14,8 @@ from app.config import config
 # Load environment variables
 load_dotenv()
 
-# Get API key from environment
-API_KEY = os.getenv("LAWMATICS_API_KEY")
+# Get API credentials from environment (OAuth or legacy API key)
+API_KEY = os.getenv("LAWMATICS_ACCESS_TOKEN") or os.getenv("LAWMATICS_API_KEY")
 
 # Create the search server
 search_server: FastMCP[Any] = FastMCP(
@@ -78,7 +78,7 @@ async def search_contacts(
         logger.info(search_msg)
 
     if not API_KEY:
-        error_msg = "LAWMATICS_API_KEY not found in environment variables"
+        error_msg = "LAWMATICS_ACCESS_TOKEN or LAWMATICS_API_KEY not found in environment variables"
         if ctx:
             await ctx.error(error_msg)
         else:
@@ -173,7 +173,7 @@ async def search_matters(
         logger.info(search_msg)
 
     if not API_KEY:
-        error_msg = "LAWMATICS_API_KEY not found in environment variables"
+        error_msg = "LAWMATICS_ACCESS_TOKEN or LAWMATICS_API_KEY not found in environment variables"
         if ctx:
             await ctx.error(error_msg)
         else:
@@ -269,7 +269,7 @@ async def search_tasks(
         logger.info(f"Searching tasks with matter_id: {matter_id}, status: {status}")
 
     if not API_KEY:
-        error_msg = "LAWMATICS_API_KEY not found in environment variables"
+        error_msg = "LAWMATICS_ACCESS_TOKEN or LAWMATICS_API_KEY not found in environment variables"
         if ctx:
             await ctx.error(error_msg)
         else:
@@ -363,7 +363,7 @@ async def search_companies(
         logger.info(f"Searching companies with name: {name}")
 
     if not API_KEY:
-        error_msg = "LAWMATICS_API_KEY not found in environment variables"
+        error_msg = "LAWMATICS_ACCESS_TOKEN or LAWMATICS_API_KEY not found in environment variables"
         if ctx:
             await ctx.error(error_msg)
         else:
@@ -455,7 +455,7 @@ async def search_time_entries(
         logger.info(f"Searching time entries with matter_id: {matter_id}")
 
     if not API_KEY:
-        error_msg = "LAWMATICS_API_KEY not found in environment variables"
+        error_msg = "LAWMATICS_ACCESS_TOKEN or LAWMATICS_API_KEY not found in environment variables"
         if ctx:
             await ctx.error(error_msg)
         else:
@@ -549,7 +549,7 @@ async def search_expenses(
         logger.info(f"Searching expenses with matter_id: {matter_id}")
 
     if not API_KEY:
-        error_msg = "LAWMATICS_API_KEY not found in environment variables"
+        error_msg = "LAWMATICS_ACCESS_TOKEN or LAWMATICS_API_KEY not found in environment variables"
         if ctx:
             await ctx.error(error_msg)
         else:

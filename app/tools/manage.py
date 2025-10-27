@@ -14,8 +14,8 @@ from app.config import config
 # Load environment variables
 load_dotenv()
 
-# Get API key from environment
-API_KEY = os.getenv("LAWMATICS_API_KEY")
+# Get API credentials from environment (OAuth or legacy API key)
+API_KEY = os.getenv("LAWMATICS_ACCESS_TOKEN") or os.getenv("LAWMATICS_API_KEY")
 
 # Create the manage server
 manage_server: FastMCP[Any] = FastMCP(
@@ -69,7 +69,7 @@ async def create_contact(
         logger.info(f"Creating contact: {first_name} {last_name}")
 
     if not API_KEY:
-        error_msg = "LAWMATICS_API_KEY not found in environment variables"
+        error_msg = "LAWMATICS_ACCESS_TOKEN or LAWMATICS_API_KEY not found in environment variables"
         if ctx:
             await ctx.error(error_msg)
         else:
@@ -165,7 +165,7 @@ async def update_contact(
         logger.info(f"Updating contact: {contact_id}")
 
     if not API_KEY:
-        error_msg = "LAWMATICS_API_KEY not found in environment variables"
+        error_msg = "LAWMATICS_ACCESS_TOKEN or LAWMATICS_API_KEY not found in environment variables"
         if ctx:
             await ctx.error(error_msg)
         else:
@@ -261,7 +261,7 @@ async def create_task(
         logger.info(f"Creating task: {title}")
 
     if not API_KEY:
-        error_msg = "LAWMATICS_API_KEY not found in environment variables"
+        error_msg = "LAWMATICS_ACCESS_TOKEN or LAWMATICS_API_KEY not found in environment variables"
         if ctx:
             await ctx.error(error_msg)
         else:
@@ -355,7 +355,7 @@ async def update_task(
         logger.info(f"Updating task: {task_id}")
 
     if not API_KEY:
-        error_msg = "LAWMATICS_API_KEY not found in environment variables"
+        error_msg = "LAWMATICS_ACCESS_TOKEN or LAWMATICS_API_KEY not found in environment variables"
         if ctx:
             await ctx.error(error_msg)
         else:
@@ -446,7 +446,7 @@ async def create_time_entry(
         logger.info(f"Creating time entry for matter: {matter_id}")
 
     if not API_KEY:
-        error_msg = "LAWMATICS_API_KEY not found in environment variables"
+        error_msg = "LAWMATICS_ACCESS_TOKEN or LAWMATICS_API_KEY not found in environment variables"
         if ctx:
             await ctx.error(error_msg)
         else:
@@ -535,7 +535,7 @@ async def create_expense(
         logger.info(f"Creating expense for matter: {matter_id}")
 
     if not API_KEY:
-        error_msg = "LAWMATICS_API_KEY not found in environment variables"
+        error_msg = "LAWMATICS_ACCESS_TOKEN or LAWMATICS_API_KEY not found in environment variables"
         if ctx:
             await ctx.error(error_msg)
         else:
@@ -614,7 +614,7 @@ async def delete_task(
         logger.info(f"Deleting task: {task_id}")
 
     if not API_KEY:
-        error_msg = "LAWMATICS_API_KEY not found in environment variables"
+        error_msg = "LAWMATICS_ACCESS_TOKEN or LAWMATICS_API_KEY not found in environment variables"
         if ctx:
             await ctx.error(error_msg)
         else:
