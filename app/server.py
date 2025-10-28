@@ -2,6 +2,7 @@
 """Lawmatics MCP Server - FastMCP Implementation."""
 
 import asyncio
+import os
 from datetime import UTC, datetime
 from pathlib import Path
 import sys
@@ -48,9 +49,37 @@ def is_docker() -> bool:
     )
 
 
+mcp_auth = None
+_auth_env = os.getenv("FASTMCP_SERVER_AUTH")
+if _auth_env == "fastmcp.server.auth.providers.auth0.Auth0Provider":
+    try:
+        from fastmcp.server.auth.providers.auth0 import Auth0Provider  # type: ignore
+        auth_kwargs: dict[str, Any] = {
+            "config_url": os.environ["FASTMCP_SERVER_AUTH_AUTH0_CONFIG_URL"],
+            "client_id": os.environ["FASTMCP_SERVER_AUTH_AUTH0_CLIENT_ID"],
+            "client_secret": os.environ["FASTMCP_SERVER_AUTH_AUTH0_CLIENT_SECRET"],
+            "audience": os.environ["FASTMCP_SERVER_AUTH_AUTH0_AUDIENCE"],
+            "base_url": os.environ["FASTMCP_SERVER_AUTH_AUTH0_BASE_URL"],
+        }
+        issuer = os.getenv("FASTMCP_SERVER_AUTH_AUTH0_ISSUER_URL")
+        if issuer:
+            auth_kwargs["issuer_url"] = issuer
+        mcp_auth = Auth0Provider(**auth_kwargs)
+        logger.info("Configured Auth0 OAuth provider for MCP server")
+    except KeyError as exc:
+        missing = exc.args[0]
+        raise RuntimeError(
+            f"Missing required Auth0 configuration environment variable: {missing}"
+        ) from exc
+    except ImportError as exc:
+        raise RuntimeError(
+            "fastmcp Auth0 provider is not available. Ensure fastmcp>=2.13 is installed."
+        ) from exc
+
 # Create main server instance
 mcp: FastMCP[Any] = FastMCP(
     name="Lawmatics MCP Server",
+    auth=mcp_auth,
     instructions=(
         "Model Context Protocol server providing LLMs with access to the Lawmatics legal practice management platform. "
         "This server enables comprehensive management of legal contacts (leads, clients, referrers), "
@@ -144,11 +173,10 @@ async def _ensure_setup() -> None:
 # Resources and Prompts (registered at module level for fastmcp inspect)
 # ============================================================================
 
-import os as _os
 import httpx as _httpx
 from pydantic import Field as _Field
 
-_API_KEY = _os.getenv("LAWMATICS_ACCESS_TOKEN") or _os.getenv("LAWMATICS_API_KEY")
+_API_KEY = os.getenv("LAWMATICS_ACCESS_TOKEN") or os.getenv("LAWMATICS_API_KEY")
 
 
 @mcp.resource(
