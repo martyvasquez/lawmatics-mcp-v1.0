@@ -12,6 +12,8 @@ from typing import Annotated as _Annotated, Any
 from fastmcp import Context as _Context, FastMCP
 from loguru import logger
 import psutil
+from starlette.responses import JSONResponse
+from starlette.routing import Route
 
 from app.config import config
 from app.tools import get_server, manage_server, search_server
@@ -100,6 +102,42 @@ if mcp_auth is not None:
         auth_routes = mcp_auth.get_routes(mcp_path="/mcp")
         mcp._additional_http_routes.extend(auth_routes)
         logger.info("Registered Auth0 discovery routes for MCP server")
+
+        def _openid_configuration_route(request: Any) -> JSONResponse:
+            base_url = os.environ["FASTMCP_SERVER_AUTH_AUTH0_BASE_URL"].rstrip("/")
+            issuer = os.getenv("FASTMCP_SERVER_AUTH_AUTH0_ISSUER_URL", base_url).rstrip(
+                "/"
+            )
+
+            config_json = {
+                "issuer": issuer,
+                "authorization_endpoint": f"{base_url}/authorize",
+                "token_endpoint": f"{base_url}/token",
+                "registration_endpoint": f"{base_url}/register",
+                "response_types_supported": ["code"],
+                "grant_types_supported": ["authorization_code"],
+                "token_endpoint_auth_methods_supported": [
+                    "none",
+                    "client_secret_post",
+                ],
+                "code_challenge_methods_supported": ["S256"],
+                "scopes_supported": [
+                    "openid",
+                    "profile",
+                    "email",
+                    "token",
+                ],
+                "claims_supported": ["sub", "api_token"],
+            }
+            return JSONResponse(config_json)
+
+        mcp._additional_http_routes.append(
+            Route(
+                "/.well-known/openid-configuration",
+                _openid_configuration_route,
+                methods=["GET"],
+            )
+        )
     except Exception as exc:
         logger.warning(f"Failed to register Auth0 routes: {exc}")
 
