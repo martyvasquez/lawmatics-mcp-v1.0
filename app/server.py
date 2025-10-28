@@ -77,10 +77,9 @@ if _auth_env == "fastmcp.server.auth.providers.auth0.Auth0Provider":
         ) from exc
 
 # Create main server instance
-mcp: FastMCP[Any] = FastMCP(
-    name="Lawmatics MCP Server",
-    auth=mcp_auth,
-    instructions=(
+_mcp_kwargs: dict[str, Any] = {
+    "name": "Lawmatics MCP Server",
+    "instructions": (
         "Model Context Protocol server providing LLMs with access to the Lawmatics legal practice management platform. "
         "This server enables comprehensive management of legal contacts (leads, clients, referrers), "
         "matters (cases), tasks, companies, time entries, and expenses. "
@@ -89,7 +88,20 @@ mcp: FastMCP[Any] = FastMCP(
         "Perfect for legal CRM automation, case management, billing, and practice analytics. "
         "All tools support filtering by phone number, email, matter ID, and other criteria."
     ),
-)
+}
+
+if mcp_auth is not None:
+    _mcp_kwargs["auth"] = mcp_auth
+
+mcp: FastMCP[Any] = FastMCP(**_mcp_kwargs)
+
+if mcp_auth is not None:
+    try:
+        auth_routes = mcp_auth.get_routes(mcp_path="/mcp")
+        mcp._additional_http_routes.extend(auth_routes)
+        logger.info("Registered Auth0 discovery routes for MCP server")
+    except Exception as exc:
+        logger.warning(f"Failed to register Auth0 routes: {exc}")
 
 
 @mcp.tool()
