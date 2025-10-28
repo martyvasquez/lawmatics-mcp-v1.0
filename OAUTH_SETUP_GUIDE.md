@@ -77,6 +77,7 @@ https://your-custom-domain.com/oauth/callback
    LAWMATICS_CLIENT_ID=your_client_id_from_step_2
    LAWMATICS_CLIENT_SECRET=your_client_secret_from_step_2
    LAWMATICS_REDIRECT_URI=http://localhost:8000/oauth/callback
+   LAWMATICS_USE_PKCE=false
    ```
 
 3. **Save the file** (Ctrl+O, Enter, Ctrl+X)
@@ -92,6 +93,7 @@ https://your-custom-domain.com/oauth/callback
    LAWMATICS_CLIENT_ID = your_client_id_here
    LAWMATICS_CLIENT_SECRET = your_client_secret_here
    LAWMATICS_REDIRECT_URI = https://lawmatics-mcp.fastmcp.app/oauth/callback
+   LAWMATICS_USE_PKCE = false
    ```
 
 3. **Deploy or Redeploy** your server
@@ -111,38 +113,37 @@ Now you need to complete the OAuth flow to get an access token:
 
 2. **Visit the authorization URL in your browser:**
    ```
-   https://app.lawmatics.com/oauth/authorize?client_id=YOUR_CLIENT_ID&redirect_uri=http://localhost:8000/oauth/callback&response_type=code&scope=read+write
+   https://app.lawmatics.com/oauth/authorize?client_id=YOUR_CLIENT_ID&redirect_uri=https://lawmatics-mcp.fastmcp.app/oauth/callback&response_type=code
    ```
 
-   Replace `YOUR_CLIENT_ID` with your actual Client ID.
+   Replace `YOUR_CLIENT_ID` with your actual Client ID and use the exact HTTPS redirect URI saved in Lawmatics. (They currently reject plain `http://localhost`.)
 
-   > Tip: Run `python3 get_token_manual.py` (or `get_token_auto.py`) to generate this URL and the required PKCE code verifier automatically.
+   > Tip: Set `LAWMATICS_USE_PKCE=false` in `.env` before running `python3 get_token_manual.py` if you want the helper script to generate this minimal request automatically.
 
 3. **Authorize the application**
    - Log into Lawmatics (if not already logged in)
    - Review the permissions requested
    - Click "Authorize" or "Allow"
 
-4. **You'll be redirected to:**
+4. **You'll be redirected to something like:**
    ```
-   http://localhost:8000/oauth/callback?code=AUTHORIZATION_CODE
+   https://lawmatics-mcp.fastmcp.app/oauth/callback?code=AUTHORIZATION_CODE
    ```
+   Seeing a **404 Not Found** page at this URL is expected—the callback endpoint only needs to capture the `code`.
 
-5. **Copy the authorization code** from the URL (the part after `code=`)
-6. **Record the PKCE `code_verifier`** that the helper script printed when it opened the browser
+5. **Copy the authorization code** from the URL (everything after `code=`).
 
-7. **Exchange the code for an access token** using this curl command:
+6. **Exchange the code for an access token** using this curl command:
    ```bash
    curl -X POST https://api.lawmatics.com/oauth/token \
      -d "grant_type=authorization_code" \
      -d "code=AUTHORIZATION_CODE" \
-     -d "redirect_uri=http://localhost:8000/oauth/callback" \
+     -d "redirect_uri=https://lawmatics-mcp.fastmcp.app/oauth/callback" \
      -d "client_id=YOUR_CLIENT_ID" \
-     -d "client_secret=YOUR_CLIENT_SECRET" \
-     -d "code_verifier=THE_CODE_VERIFIER_FROM_STEP_6"
+     -d "client_secret=YOUR_CLIENT_SECRET"
    ```
 
-8. **You'll receive a JSON response:**
+7. **You'll receive a JSON response:**
    ```json
    {
      "access_token": "your_access_token_here",
@@ -153,12 +154,12 @@ Now you need to complete the OAuth flow to get an access token:
    }
    ```
 
-9. **Add the access token to your `.env` file:**
+8. **Add the access token to your `.env` file:**
    ```env
    LAWMATICS_ACCESS_TOKEN=your_access_token_here
    ```
 
-   > If Lawmatics support requests a stripped-down OAuth request, set `LAWMATICS_USE_PKCE=false` in `.env` to disable PKCE. The helper scripts and `LawmaticsOAuthClient` will then omit the `code_challenge` and `code_verifier` parameters.
+   > Want to use PKCE? Leave `LAWMATICS_USE_PKCE=true`, include `&scope=read+write&code_challenge=...` in the authorize URL, and add `-d "code_verifier=THE_VERIFIER"` to the curl call. The helper scripts print the verifier when PKCE is enabled.
 
 ---
 
