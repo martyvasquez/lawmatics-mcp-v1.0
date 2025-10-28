@@ -57,7 +57,9 @@ Save and exit (Ctrl+O, Enter, Ctrl+X)
 
 **Option A: Using Your Browser (Easiest)**
 
-1. Build this URL (replace `YOUR_CLIENT_ID`):
+> Tip: run `python3 get_token_manual.py` to generate the authorization URL and PKCE verifier automatically. It will open your browser and handle the token exchange for you.
+
+1. Build this URL (replace `YOUR_CLIENT_ID`). The helper script will also print a `code_verifier` value you must keep for the token exchange step:
    ```
    https://app.lawmatics.com/oauth/authorize?client_id=YOUR_CLIENT_ID&redirect_uri=http://localhost:8000/oauth/callback&response_type=code&scope=read+write
    ```
@@ -66,6 +68,7 @@ Save and exit (Ctrl+O, Enter, Ctrl+X)
 3. Click "Authorize"
 4. You'll be redirected to: `http://localhost:8000/oauth/callback?code=ABC123...`
 5. Copy the code from the URL (everything after `code=`)
+6. Record the `code_verifier` shown by the helper script (PKCE requirement)
 
 **Option B: Exchange Code for Token**
 
@@ -76,7 +79,8 @@ curl -X POST https://api.lawmatics.com/oauth/token \
   -d "code=YOUR_CODE_FROM_STEP_5" \
   -d "redirect_uri=http://localhost:8000/oauth/callback" \
   -d "client_id=YOUR_CLIENT_ID" \
-  -d "client_secret=YOUR_CLIENT_SECRET"
+  -d "client_secret=YOUR_CLIENT_SECRET" \
+  -d "code_verifier=THE_CODE_VERIFIER_FROM_STEP_3"
 ```
 
 You'll get back:
@@ -150,6 +154,8 @@ If it works, you'll see contact and matter data! 🎉
 - **Docs**: https://docs.lawmatics.com
 
 ---
+
+> Need to match Lawmatics' minimal OAuth spec? Set `LAWMATICS_USE_PKCE=false` in your `.env` to disable PKCE and remove the `code_challenge`/`code_verifier` parameters from the helper scripts.
 
 ## ✅ Checklist
 

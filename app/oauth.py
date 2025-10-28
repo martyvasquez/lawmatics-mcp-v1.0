@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """OAuth 2.0 authentication handler for Lawmatics."""
 
+import base64
+import hashlib
 import os
+import secrets
 from typing import Any
 from urllib.parse import urlencode
 
@@ -21,6 +24,7 @@ class LawmaticsOAuthClient:
         client_id: str | None = None,
         client_secret: str | None = None,
         redirect_uri: str | None = None,
+        use_pkce: bool | None = None,
     ):
         """Initialize OAuth client.
 
@@ -28,12 +32,42 @@ class LawmaticsOAuthClient:
             client_id: OAuth client ID from Lawmatics
             client_secret: OAuth client secret from Lawmatics
             redirect_uri: Callback URL registered with Lawmatics
+            use_pkce: Whether to use PKCE code challenge flow
         """
         self.client_id = client_id or os.getenv("LAWMATICS_CLIENT_ID")
         self.client_secret = client_secret or os.getenv("LAWMATICS_CLIENT_SECRET")
         self.redirect_uri = redirect_uri or os.getenv("LAWMATICS_REDIRECT_URI")
         self.access_token: str | None = None
         self.refresh_token: str | None = None
+        self.use_pkce = (
+            use_pkce
+            if use_pkce is not None
+            else os.getenv("LAWMATICS_USE_PKCE", "true").lower()
+            in {"1", "true", "yes", "on"}
+        )
+        self._code_verifier: str | None = None
+
+    def _generate_code_verifier(self) -> str:
+        """Generate a new PKCE code verifier and store it."""
+        # 32 bytes gives us 43 characters after urlsafe base64 encoding
+        verifier = base64.urlsafe_b64encode(secrets.token_bytes(32)).decode("ascii").rstrip("=")
+        # Ensure verifier is within the allowed length (43-128 chars)
+        if len(verifier) < 43:
+            verifier = verifier.ljust(43, "A")
+        self._code_verifier = verifier[:128]
+        return self._code_verifier
+
+    def _get_code_verifier(self) -> str:
+        """Return the current code verifier, generating one if needed."""
+        if not self._code_verifier:
+            return self._generate_code_verifier()
+        return self._code_verifier
+
+    def _get_code_challenge(self) -> str:
+        """Create a PKCE code challenge from the current verifier."""
+        verifier = self._get_code_verifier().encode("ascii")
+        digest = hashlib.sha256(verifier).digest()
+        return base64.urlsafe_b64encode(digest).decode("ascii").rstrip("=")
 
     def get_authorization_url(self, state: str | None = None) -> str:
         """Generate OAuth authorization URL.
@@ -53,6 +87,12 @@ class LawmaticsOAuthClient:
 
         if state:
             params["state"] = state
+
+        if self.use_pkce:
+            # Always generate a new verifier for each auth URL
+            self._code_verifier = None
+            params["code_challenge"] = self._get_code_challenge()
+            params["code_challenge_method"] = "S256"
 
         return f"{LAWMATICS_AUTHORIZE_URL}?{urlencode(params)}"
 
@@ -75,6 +115,9 @@ class LawmaticsOAuthClient:
             "client_id": self.client_id,
             "client_secret": self.client_secret,
         }
+
+        if self.use_pkce:
+            data["code_verifier"] = self._get_code_verifier()
 
         async with httpx.AsyncClient() as client:
             response = await client.post(

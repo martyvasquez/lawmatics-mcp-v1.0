@@ -116,6 +116,8 @@ Now you need to complete the OAuth flow to get an access token:
 
    Replace `YOUR_CLIENT_ID` with your actual Client ID.
 
+   > Tip: Run `python3 get_token_manual.py` (or `get_token_auto.py`) to generate this URL and the required PKCE code verifier automatically.
+
 3. **Authorize the application**
    - Log into Lawmatics (if not already logged in)
    - Review the permissions requested
@@ -127,18 +129,20 @@ Now you need to complete the OAuth flow to get an access token:
    ```
 
 5. **Copy the authorization code** from the URL (the part after `code=`)
+6. **Record the PKCE `code_verifier`** that the helper script printed when it opened the browser
 
-6. **Exchange the code for an access token** using this curl command:
+7. **Exchange the code for an access token** using this curl command:
    ```bash
    curl -X POST https://api.lawmatics.com/oauth/token \
      -d "grant_type=authorization_code" \
      -d "code=AUTHORIZATION_CODE" \
      -d "redirect_uri=http://localhost:8000/oauth/callback" \
      -d "client_id=YOUR_CLIENT_ID" \
-     -d "client_secret=YOUR_CLIENT_SECRET"
+     -d "client_secret=YOUR_CLIENT_SECRET" \
+     -d "code_verifier=THE_CODE_VERIFIER_FROM_STEP_6"
    ```
 
-7. **You'll receive a JSON response:**
+8. **You'll receive a JSON response:**
    ```json
    {
      "access_token": "your_access_token_here",
@@ -149,10 +153,12 @@ Now you need to complete the OAuth flow to get an access token:
    }
    ```
 
-8. **Add the access token to your `.env` file:**
+9. **Add the access token to your `.env` file:**
    ```env
    LAWMATICS_ACCESS_TOKEN=your_access_token_here
    ```
+
+   > If Lawmatics support requests a stripped-down OAuth request, set `LAWMATICS_USE_PKCE=false` in `.env` to disable PKCE. The helper scripts and `LawmaticsOAuthClient` will then omit the `code_challenge` and `code_verifier` parameters.
 
 ---
 
