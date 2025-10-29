@@ -99,7 +99,7 @@ mcp: FastMCP[Any] = FastMCP(**_mcp_kwargs)
 
 if mcp_auth is not None:
     try:
-        auth_routes = mcp_auth.get_routes(mcp_path="/mcp")
+        auth_routes = mcp_auth.get_routes(mcp_path="/")
         mcp._additional_http_routes.extend(auth_routes)
         logger.info("Registered Auth0 discovery routes for MCP server")
 
@@ -575,7 +575,7 @@ async def main() -> None:
             transport="streamable-http",
             host=config.host,
             port=config.mcp_port,
-            path="/mcp/",
+            path="/",
             log_level=config.log_level.lower(),
         )
     except Exception as e:
